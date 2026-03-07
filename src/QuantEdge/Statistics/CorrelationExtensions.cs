@@ -1,4 +1,4 @@
-namespace QuantSharp.Statistics;
+namespace QuantEdge.Statistics;
 
 /// <summary>
 /// Provides extension methods for calculating correlation coefficients on various collection types.

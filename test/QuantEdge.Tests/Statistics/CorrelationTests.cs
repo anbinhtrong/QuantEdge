@@ -1,6 +1,6 @@
-using QuantSharp.Statistics;
+using QuantEdge.Statistics;
 
-namespace QuantSharp.Tests.Statistics;
+namespace QuantEdge.Tests.Statistics;
 
 /// <summary>
 /// Unit tests for the Correlation class.

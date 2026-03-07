@@ -4,6 +4,6 @@
     <File Path=".github/workflows/build.yml" />
     <File Path=".github/workflows/publish.yml" />
   </Folder>
-  <Project Path="src/QuantSharp/QuantSharp.csproj" Id="5a70afc8-bd4e-4e57-b668-85683e0d96a9" />
-  <Project Path="test/QuantSharp.Tests/QuantSharp.Tests.csproj" />
+  <Project Path="src/QuantEdge/QuantEdge.csproj" />
+  <Project Path="test/QuantEdge.Tests/QuantEdge.Tests.csproj" />
 </Solution>

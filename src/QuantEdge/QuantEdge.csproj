@@ -6,23 +6,23 @@
     <Nullable>enable</Nullable>
 
     <!-- NuGet Package Settings -->
-    <PackageId>QuantSharp</PackageId>
-    <Version>1.0.0</Version>
+    <PackageId>QuantEdge</PackageId>
+    <Version>1.0.1</Version>
     <Authors>anbinhtrong</Authors>
     <Description>A quantitative finance library for .NET</Description>
     <Copyright>Copyright (c) 2026 anbinhtrong</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>quantitative;finance;trading;quant;financial-analysis</PackageTags>
-    <PackageProjectUrl>https://github.com/anbinhtrong/QuantSharp</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/anbinhtrong/QuantEdge</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <!-- Source Link Settings -->
-    <RepositoryUrl>https://github.com/anbinhtrong/QuantSharp</RepositoryUrl>
+    <RepositoryUrl>https://github.com/anbinhtrong/QuantEdge</RepositoryUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <Title>QuantSharp</Title>
+    <Title>QuantEdge</Title>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 

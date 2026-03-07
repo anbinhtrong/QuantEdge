@@ -1,4 +1,4 @@
-namespace QuantSharp.Statistics;
+namespace QuantEdge.Statistics;
 
 /// <summary>
 /// Provides statistical correlation calculation methods.

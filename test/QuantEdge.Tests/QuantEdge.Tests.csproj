@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\QuantSharp\QuantSharp.csproj" />
+    <ProjectReference Include="..\..\src\QuantEdge\QuantEdge.csproj" />
   </ItemGroup>
 
   <ItemGroup>
