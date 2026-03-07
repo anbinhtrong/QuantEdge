@@ -262,6 +262,232 @@ public class CorrelationExtensionsTests
 
     #endregion
 
+    #region Covariance Extension Tests
+
+    [Fact]
+    public void GetCovariance_WithDoubleArrays_CalculatesCorrectly()
+    {
+        // Arrange
+        double[] x = [1, 2, 3, 4, 5];
+        double[] y = [2, 4, 6, 8, 10];
+
+        // Act
+        double result = x.GetCovariance(y);
+
+        // Assert
+        Assert.Equal(5.0, result, Tolerance);
+    }
+
+    [Fact]
+    public void GetCovariance_WithLists_CalculatesCorrectly()
+    {
+        // Arrange
+        var x = new List<double> { 1, 2, 3, 4, 5 };
+        var y = new List<double> { 10, 8, 6, 4, 2 };
+
+        // Act
+        double result = x.GetCovariance(y);
+
+        // Assert
+        Assert.True(result < 0, "Covariance should be negative for negatively related data");
+    }
+
+    [Fact]
+    public void GetCovariance_WithIEnumerable_CalculatesCorrectly()
+    {
+        // Arrange
+        IEnumerable<double> x = [1, 2, 3, 4, 5];
+        IEnumerable<double> y = [2, 4, 6, 8, 10];
+
+        // Act
+        double result = x.GetCovariance(y);
+
+        // Assert
+        Assert.Equal(5.0, result, Tolerance);
+    }
+
+    [Fact]
+    public void GetCovariance_WithSpans_CalculatesCorrectly()
+    {
+        // Arrange
+        double[] xArray = [1, 2, 3, 4, 5];
+        double[] yArray = [2, 4, 6, 8, 10];
+        ReadOnlySpan<double> x = xArray;
+        ReadOnlySpan<double> y = yArray;
+
+        // Act
+        double result = x.GetCovariance(y);
+
+        // Assert
+        Assert.Equal(5.0, result, Tolerance);
+    }
+
+    #endregion
+
+    #region Beta Extension Tests
+
+    [Fact]
+    public void GetBeta_WithDoubleArrays_CalculatesCorrectly()
+    {
+        // Arrange - Asset returns = Market returns
+        double[] assetReturns = [0.02, -0.01, 0.03, 0.01, -0.02];
+        double[] marketReturns = [0.02, -0.01, 0.03, 0.01, -0.02];
+
+        // Act
+        double result = assetReturns.GetBeta(marketReturns);
+
+        // Assert
+        Assert.Equal(1.0, result, Tolerance);
+    }
+
+    [Fact]
+    public void GetBeta_WithLists_CalculatesCorrectly()
+    {
+        // Arrange
+        var assetReturns = new List<double> { 0.02, -0.01, 0.03, 0.01, -0.02 };
+        var marketReturns = new List<double> { 0.01, -0.005, 0.015, 0.005, -0.01 };
+
+        // Act
+        double result = assetReturns.GetBeta(marketReturns);
+
+        // Assert
+        Assert.True(result > 1.0, "Asset is more volatile than market");
+    }
+
+    [Fact]
+    public void GetBeta_WithIEnumerable_CalculatesCorrectly()
+    {
+        // Arrange
+        IEnumerable<double> assetReturns = [0.02, -0.01, 0.03, 0.01, -0.02];
+        IEnumerable<double> marketReturns = [0.02, -0.01, 0.03, 0.01, -0.02];
+
+        // Act
+        double result = assetReturns.GetBeta(marketReturns);
+
+        // Assert
+        Assert.Equal(1.0, result, Tolerance);
+    }
+
+    [Fact]
+    public void GetBeta_WithSpans_CalculatesCorrectly()
+    {
+        // Arrange
+        double[] assetArray = [0.02, -0.01, 0.03, 0.01, -0.02];
+        double[] marketArray = [0.02, -0.01, 0.03, 0.01, -0.02];
+        ReadOnlySpan<double> assetReturns = assetArray;
+        ReadOnlySpan<double> marketReturns = marketArray;
+
+        // Act
+        double result = assetReturns.GetBeta(marketReturns);
+
+        // Assert
+        Assert.Equal(1.0, result, Tolerance);
+    }
+
+    [Fact]
+    public void GetBeta_RealWorldScenario_TechStockVsMarket()
+    {
+        // Arrange - Tech stock typically has Beta > 1
+        double[] techStockReturns = [0.03, -0.02, 0.05, 0.02, -0.03, 0.06, -0.01];
+        double[] marketReturns = [0.02, -0.01, 0.03, 0.01, -0.02, 0.04, -0.01];
+
+        // Act
+        double beta = techStockReturns.GetBeta(marketReturns);
+
+        // Assert
+        Assert.True(beta > 1.0, $"Tech stocks typically have Beta > 1. Got: {beta:F4}");
+    }
+
+    #endregion
+
+    #region Rolling Correlation Extension Tests
+
+    [Fact]
+    public void GetRollingCorrelation_WithDoubleArrays_CalculatesCorrectly()
+    {
+        // Arrange
+        double[] x = [1, 2, 3, 4, 5, 6, 7, 8];
+        double[] y = [2, 4, 6, 8, 10, 12, 14, 16];
+        int window = 3;
+
+        // Act
+        double[] result = x.GetRollingCorrelation(y, window);
+
+        // Assert
+        Assert.Equal(6, result.Length); // 8 - 3 + 1 = 6
+        Assert.All(result, r => Assert.Equal(1.0, r, Tolerance));
+    }
+
+    [Fact]
+    public void GetRollingCorrelation_WithLists_CalculatesCorrectly()
+    {
+        // Arrange
+        var x = new List<double> { 1, 2, 3, 4, 5, 6, 7, 8 };
+        var y = new List<double> { 2, 4, 6, 8, 10, 12, 14, 16 };
+        int window = 3;
+
+        // Act
+        double[] result = x.GetRollingCorrelation(y, window);
+
+        // Assert
+        Assert.Equal(6, result.Length);
+    }
+
+    [Fact]
+    public void GetRollingCorrelation_WithIEnumerable_CalculatesCorrectly()
+    {
+        // Arrange
+        IEnumerable<double> x = [1, 2, 3, 4, 5, 6];
+        IEnumerable<double> y = [2, 4, 6, 8, 10, 12];
+        int window = 3;
+
+        // Act
+        double[] result = x.GetRollingCorrelation(y, window);
+
+        // Assert
+        Assert.Equal(4, result.Length);
+    }
+
+    [Fact]
+    public void GetRollingCorrelation_WithSpans_CalculatesCorrectly()
+    {
+        // Arrange
+        double[] xArray = [1, 2, 3, 4, 5, 6];
+        double[] yArray = [2, 4, 6, 8, 10, 12];
+        ReadOnlySpan<double> x = xArray;
+        ReadOnlySpan<double> y = yArray;
+        int window = 3;
+
+        // Act
+        double[] result = x.GetRollingCorrelation(y, window);
+
+        // Assert
+        Assert.Equal(4, result.Length);
+    }
+
+    [Fact]
+    public void GetRollingCorrelation_DetectsChangingMarketConditions()
+    {
+        // Arrange - Correlation changes over time
+        double[] stockA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        double[] stockB = [2, 4, 6, 8, 10, 10, 8, 6, 4, 2]; // Direction changes
+        int window = 5;
+
+        // Act
+        double[] rollingCorr = stockA.GetRollingCorrelation(stockB, window);
+
+        // Assert
+        Assert.Equal(6, rollingCorr.Length);
+
+        // First window should show positive correlation
+        Assert.True(rollingCorr[0] > 0, "Early period shows positive correlation");
+
+        // Last window should show negative correlation
+        Assert.True(rollingCorr[rollingCorr.Length - 1] < 0, "Later period shows negative correlation");
+    }
+
+    #endregion
+
     #region Correlation Matrix Extension Tests
 
     [Fact]

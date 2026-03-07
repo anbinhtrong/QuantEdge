@@ -254,4 +254,200 @@ public static class Correlation
         double r = Pearson(x, y);
         return double.IsNaN(r) ? double.NaN : r * r;
     }
+
+    /// <summary>
+    /// Calculates the covariance between two datasets.
+    /// </summary>
+    /// <param name="x">The first dataset.</param>
+    /// <param name="y">The second dataset.</param>
+    /// <returns>
+    /// The covariance value.
+    /// Returns NaN if either dataset has fewer than 2 elements.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the two datasets have different lengths.
+    /// </exception>
+    /// <remarks>
+    /// Covariance measures how two variables change together.
+    /// Positive covariance indicates that the variables tend to move in the same direction,
+    /// while negative covariance indicates they move in opposite directions.
+    /// 
+    /// Formula: Cov(X,Y) = Σ((xi - x̄)(yi - ȳ)) / (n - 1)
+    /// 
+    /// Note: This uses sample covariance (n-1 in denominator) rather than population covariance (n).
+    /// 
+    /// Time complexity: O(n)
+    /// Space complexity: O(1)
+    /// </remarks>
+    public static double Covariance(ReadOnlySpan<double> x, ReadOnlySpan<double> y)
+    {
+        if (x.Length != y.Length)
+        {
+            throw new ArgumentException(
+                $"Both datasets must have the same length. x.Length={x.Length}, y.Length={y.Length}",
+                nameof(y));
+        }
+
+        int n = x.Length;
+        if (n < 2)
+        {
+            return double.NaN;
+        }
+
+        double meanX = 0, meanY = 0;
+        for (int i = 0; i < n; i++)
+        {
+            meanX += x[i];
+            meanY += y[i];
+        }
+        meanX /= n;
+        meanY /= n;
+
+        double covariance = 0;
+        for (int i = 0; i < n; i++)
+        {
+            covariance += (x[i] - meanX) * (y[i] - meanY);
+        }
+
+        return covariance / (n - 1);
+    }
+
+    /// <summary>
+    /// Calculates the Beta coefficient of an asset relative to the market.
+    /// </summary>
+    /// <param name="assetReturns">The returns of the asset.</param>
+    /// <param name="marketReturns">The returns of the market or benchmark.</param>
+    /// <returns>
+    /// The Beta coefficient.
+    /// Returns NaN if calculation is not possible (e.g., market has no variance).
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the two datasets have different lengths.
+    /// </exception>
+    /// <remarks>
+    /// Beta measures the systematic risk of an asset relative to the market.
+    /// It indicates how sensitive the asset's returns are to market movements.
+    /// 
+    /// Formula: β = Cov(Asset, Market) / Var(Market)
+    /// 
+    /// Interpretation:
+    /// - β = 1: Asset moves with the market
+    /// - β > 1: Asset is more volatile than the market
+    /// - β &lt; 1: Asset is less volatile than the market
+    /// - β &lt; 0: Asset moves opposite to the market
+    /// 
+    /// Beta is a key component of the Capital Asset Pricing Model (CAPM).
+    /// 
+    /// Time complexity: O(n)
+    /// Space complexity: O(1)
+    /// </remarks>
+    public static double Beta(ReadOnlySpan<double> assetReturns, ReadOnlySpan<double> marketReturns)
+    {
+        if (assetReturns.Length != marketReturns.Length)
+        {
+            throw new ArgumentException(
+                $"Both datasets must have the same length. assetReturns.Length={assetReturns.Length}, marketReturns.Length={marketReturns.Length}",
+                nameof(marketReturns));
+        }
+
+        int n = assetReturns.Length;
+        if (n < 2)
+        {
+            return double.NaN;
+        }
+
+        double meanMarket = 0;
+        for (int i = 0; i < n; i++)
+        {
+            meanMarket += marketReturns[i];
+        }
+        meanMarket /= n;
+
+        double meanAsset = 0;
+        for (int i = 0; i < n; i++)
+        {
+            meanAsset += assetReturns[i];
+        }
+        meanAsset /= n;
+
+        double covariance = 0;
+        double marketVariance = 0;
+        for (int i = 0; i < n; i++)
+        {
+            double marketDiff = marketReturns[i] - meanMarket;
+            covariance += (assetReturns[i] - meanAsset) * marketDiff;
+            marketVariance += marketDiff * marketDiff;
+        }
+
+        if (marketVariance == 0)
+        {
+            return double.NaN;
+        }
+
+        return covariance / marketVariance;
+    }
+
+    /// <summary>
+    /// Calculates the rolling (moving window) correlation between two datasets.
+    /// </summary>
+    /// <param name="x">The first dataset.</param>
+    /// <param name="y">The second dataset.</param>
+    /// <param name="window">The size of the rolling window.</param>
+    /// <returns>
+    /// An array of correlation coefficients, where each value represents
+    /// the correlation over the corresponding window.
+    /// The output length is (x.Length - window + 1).
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the two datasets have different lengths.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when window size is less than 2 or greater than data length.
+    /// </exception>
+    /// <remarks>
+    /// Rolling correlation is useful for analyzing how the relationship between
+    /// two variables changes over time. This is particularly important in financial
+    /// markets where correlations can vary significantly during different market conditions.
+    /// 
+    /// Example: A 30-day rolling correlation can show how stock relationships
+    /// change during volatile periods vs. stable periods.
+    /// 
+    /// Time complexity: O(n * window) where n is the number of windows
+    /// Space complexity: O(n)
+    /// </remarks>
+    public static double[] RollingCorrelation(ReadOnlySpan<double> x, ReadOnlySpan<double> y, int window)
+    {
+        if (x.Length != y.Length)
+        {
+            throw new ArgumentException(
+                $"Both datasets must have the same length. x.Length={x.Length}, y.Length={y.Length}",
+                nameof(y));
+        }
+
+        if (window < 2)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(window),
+                $"Window size must be at least 2. Provided: {window}");
+        }
+
+        if (window > x.Length)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(window),
+                $"Window size ({window}) cannot be greater than data length ({x.Length})");
+        }
+
+        int outputLength = x.Length - window + 1;
+        double[] results = new double[outputLength];
+
+        for (int i = 0; i < outputLength; i++)
+        {
+            ReadOnlySpan<double> windowX = x.Slice(i, window);
+            ReadOnlySpan<double> windowY = y.Slice(i, window);
+            results[i] = Pearson(windowX, windowY);
+        }
+
+        return results;
+    }
 }

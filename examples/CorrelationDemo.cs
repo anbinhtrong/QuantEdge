@@ -13,12 +13,15 @@ public static class CorrelationDemo
     public static void RunAllExamples()
     {
         Console.WriteLine("=== QuantSharp Correlation Examples ===\n");
-        
+
         Example1_BasicCorrelation();
         Example2_PortfolioDiversification();
         Example3_CompareCorrelationMethods();
         Example4_CorrelationMatrix();
         Example5_FactorAnalysis();
+        Example6_CovarianceAnalysis();
+        Example7_BetaCalculation();
+        Example8_RollingCorrelation();
     }
 
     /// <summary>
@@ -170,6 +173,100 @@ public static class CorrelationDemo
         Console.WriteLine($"Market R²:          {marketR2:F4} ({marketR2 * 100:F2}% variance explained)");
         Console.WriteLine($"Size Factor:        {sizeCorr:F4}");
         Console.WriteLine($"Value Factor:       {valueCorr:F4}\n");
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Example 6: Covariance analysis for portfolio construction.
+    /// </summary>
+    public static void Example6_CovarianceAnalysis()
+    {
+        Console.WriteLine("--- Example 6: Covariance Analysis ---");
+
+        double[] stockA = [0.02, -0.01, 0.03, 0.01, -0.02, 0.04, -0.01];
+        double[] stockB = [0.015, -0.015, 0.035, 0.005, -0.025, 0.045, -0.005];
+        double[] stockC = [-0.01, 0.02, -0.03, 0.01, 0.01, -0.02, 0.015];
+
+        double covAB = stockA.GetCovariance(stockB);
+        double covAC = stockA.GetCovariance(stockC);
+        double covBC = stockB.GetCovariance(stockC);
+
+        double corrAB = stockA.GetCorrelation(stockB);
+        double corrAC = stockA.GetCorrelation(stockC);
+
+        Console.WriteLine("Covariance vs Correlation:");
+        Console.WriteLine($"Stock A vs B - Cov: {covAB:F6}, Corr: {corrAB:F4}");
+        Console.WriteLine($"Stock A vs C - Cov: {covAC:F6}, Corr: {corrAC:F4}");
+        Console.WriteLine($"Stock B vs C - Cov: {covBC:F6}, Corr: {covBC:F4}");
+        Console.WriteLine("\n💡 Covariance shows absolute relationship strength,");
+        Console.WriteLine("   Correlation normalizes it to [-1, 1] range.\n");
+    }
+
+    /// <summary>
+    /// Example 7: Beta calculation for CAPM analysis.
+    /// </summary>
+    public static void Example7_BetaCalculation()
+    {
+        Console.WriteLine("--- Example 7: Beta Calculation (CAPM) ---");
+
+        // Market returns (e.g., S&P 500)
+        double[] marketReturns = [0.01, -0.005, 0.015, 0.01, -0.01, 0.02, -0.005];
+
+        // Different types of stocks
+        double[] defensiveStock = [0.005, -0.002, 0.008, 0.004, -0.005, 0.01, -0.002];  // β < 1
+        double[] marketStock = [0.01, -0.005, 0.015, 0.01, -0.01, 0.02, -0.005];        // β ≈ 1
+        double[] aggressiveStock = [0.02, -0.01, 0.03, 0.02, -0.02, 0.04, -0.01];      // β > 1
+
+        double betaDefensive = defensiveStock.GetBeta(marketReturns);
+        double betaMarket = marketStock.GetBeta(marketReturns);
+        double betaAggressive = aggressiveStock.GetBeta(marketReturns);
+
+        Console.WriteLine("Beta Analysis:");
+        Console.WriteLine($"Defensive Stock:  β = {betaDefensive:F4} → {InterpretBeta(betaDefensive)}");
+        Console.WriteLine($"Market Stock:     β = {betaMarket:F4} → {InterpretBeta(betaMarket)}");
+        Console.WriteLine($"Aggressive Stock: β = {betaAggressive:F4} → {InterpretBeta(betaAggressive)}");
+
+        Console.WriteLine("\n💡 Beta measures systematic risk:");
+        Console.WriteLine("   β > 1: More volatile than market (higher risk/return)");
+        Console.WriteLine("   β = 1: Moves with market");
+        Console.WriteLine("   β < 1: Less volatile than market (lower risk/return)\n");
+    }
+
+    /// <summary>
+    /// Example 8: Rolling correlation for time-varying relationships.
+    /// </summary>
+    public static void Example8_RollingCorrelation()
+    {
+        Console.WriteLine("--- Example 8: Rolling Correlation ---");
+
+        // Simulated stock returns over 20 days
+        // Correlation changes over time (high → low → negative)
+        double[] stockA = [0.02, 0.03, 0.01, -0.01, 0.02, 0.03, 0.01, 0.00, -0.01, -0.02,
+                          0.01, 0.02, 0.00, -0.01, 0.01, -0.02, -0.03, -0.01, 0.00, 0.01];
+        double[] stockB = [0.025, 0.035, 0.015, -0.005, 0.025, 0.02, 0.01, 0.005, 0.01, 0.015,
+                          0.00, -0.01, -0.015, 0.02, -0.02, 0.03, 0.04, 0.02, -0.01, -0.02];
+
+        int window = 5;
+        double[] rollingCorr = stockA.GetRollingCorrelation(stockB, window);
+
+        Console.WriteLine($"Rolling {window}-day Correlation (Total {rollingCorr.Length} windows):");
+        Console.WriteLine(new string('-', 60));
+
+        for (int i = 0; i < rollingCorr.Length; i++)
+        {
+            int dayEnd = i + window;
+            string trend = i > 0 
+                ? (rollingCorr[i] > rollingCorr[i - 1] ? "↑" : "↓")
+                : " ";
+
+            Console.WriteLine($"Days {i + 1,2}-{dayEnd,2}: Corr = {rollingCorr[i],6:F4} {trend}");
+        }
+
+        Console.WriteLine("\n💡 Rolling correlation helps detect:");
+        Console.WriteLine("   - Regime changes in market conditions");
+        Console.WriteLine("   - Dynamic hedging opportunities");
+        Console.WriteLine("   - Time-varying portfolio risk\n");
     }
 
     #region Helper Methods
