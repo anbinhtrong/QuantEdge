@@ -13,6 +13,30 @@ jobs:
     steps:
 
     - uses: actions/checkout@v4
+  
+    - name: Get Version and Metadata
+      id: meta
+      run: |
+        # Get latest tag, if there is no tag, get default tag 1.0.0
+        VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+        VERSION=${VERSION#v} # Reomve 'v'
+        
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "BUILD_TIME=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
+        echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Build and Logging
+      run: |
+        echo "------- BUILD INFORMATION -------"
+        echo "Version: ${{ steps.meta.outputs.VERSION }}"
+        echo "Commit: ${{ steps.meta.outputs.COMMIT_SHA }}"
+        echo "Thời gian: ${{ steps.meta.outputs.BUILD_TIME }}"
+        echo "Target Framework: net10.0" 
+        echo "Configuration: Release"
+        echo "-------------------------------"
+        
+        # Pass tag version into dotnet command
+        dotnet build -c Release /p:Version=${{ steps.meta.outputs.VERSION }}
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
