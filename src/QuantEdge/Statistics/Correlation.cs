@@ -1,6 +1,24 @@
 namespace QuantEdge.Statistics;
 
 /// <summary>
+/// Specifies the algorithm to use for correlation calculations.
+/// </summary>
+public enum CorrelationAlgorithm
+{
+    /// <summary>
+    /// Fast formula using direct sums. Suitable for most use cases.
+    /// May have numerical issues with very large values.
+    /// </summary>
+    Fast = 0,
+
+    /// <summary>
+    /// Welford's online algorithm. Numerically stable for large values.
+    /// Recommended for financial data, timestamps, or high-magnitude values.
+    /// </summary>
+    Welford = 1
+}
+
+/// <summary>
 /// Provides statistical correlation calculation methods.
 /// </summary>
 public static class Correlation
@@ -23,12 +41,48 @@ public static class Correlation
     /// A value of 1 indicates perfect positive correlation, -1 indicates perfect negative correlation,
     /// and 0 indicates no linear correlation.
     /// 
-    /// Formula: r = Σ((xi - x̄)(yi - ȳ)) / √(Σ(xi - x̄)² * Σ(yi - ȳ)²)
+    /// This overload uses the fast formula by default.
+    /// For numerically stable calculations with large values, use the overload with CorrelationAlgorithm parameter.
+    /// 
+    /// Formula: r = (n Σxy − Σx Σy) / √((n Σx² − (Σx)²)(n Σy² − (Σy)²))
     /// 
     /// Time complexity: O(n)
     /// Space complexity: O(1)
     /// </remarks>
     public static double Pearson(ReadOnlySpan<double> x, ReadOnlySpan<double> y)
+    {
+        return Pearson(x, y, CorrelationAlgorithm.Fast);
+    }
+
+    /// <summary>
+    /// Calculates the Pearson correlation coefficient between two datasets using the specified algorithm.
+    /// </summary>
+    /// <param name="x">The first dataset.</param>
+    /// <param name="y">The second dataset.</param>
+    /// <param name="algorithm">The algorithm to use for calculation.</param>
+    /// <returns>
+    /// The Pearson correlation coefficient in the range [-1, 1].
+    /// Returns NaN if either dataset has fewer than 2 elements.
+    /// Returns 0 if the denominator is zero (no variance in either dataset).
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the two datasets have different lengths.
+    /// </exception>
+    /// <remarks>
+    /// The Pearson correlation coefficient measures the linear relationship between two variables.
+    /// A value of 1 indicates perfect positive correlation, -1 indicates perfect negative correlation,
+    /// and 0 indicates no linear correlation.
+    /// 
+    /// Algorithm options:
+    /// - Fast: Uses direct sum formula. Fast and simple, but may have numerical issues with very large values.
+    /// - Welford: Uses online algorithm with running means. Numerically stable, recommended for financial data.
+    /// 
+    /// Formula: r = Σ((xi - x̄)(yi - ȳ)) / √(Σ(xi - x̄)² * Σ(yi - ȳ)²)
+    /// 
+    /// Time complexity: O(n)
+    /// Space complexity: O(1)
+    /// </remarks>
+    public static double Pearson(ReadOnlySpan<double> x, ReadOnlySpan<double> y, CorrelationAlgorithm algorithm)
     {
         if (x.Length != y.Length)
         {
@@ -43,13 +97,23 @@ public static class Correlation
             return double.NaN;
         }
 
+        return algorithm switch
+        {
+            CorrelationAlgorithm.Fast => PearsonFast(x, y, n),
+            CorrelationAlgorithm.Welford => PearsonWelford(x, y, n),
+            _ => throw new ArgumentException($"Unknown algorithm: {algorithm}", nameof(algorithm))
+        };
+    }
+
+    private static double PearsonFast(ReadOnlySpan<double> x, ReadOnlySpan<double> y, int n)
+    {
         double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
 
         for (int i = 0; i < n; i++)
         {
             double xi = x[i];
             double yi = y[i];
-            
+
             sumX += xi;
             sumY += yi;
             sumXY += xi * yi;
@@ -66,6 +130,43 @@ public static class Correlation
         }
 
         return numerator / denominator;
+    }
+
+    private static double PearsonWelford(ReadOnlySpan<double> x, ReadOnlySpan<double> y, int n)
+    {
+        double meanX = 0;
+        double meanY = 0;
+        double m2X = 0;
+        double m2Y = 0;
+        double cXY = 0;
+
+        for (int i = 0; i < n; i++)
+        {
+            double xi = x[i];
+            double yi = y[i];
+
+            int count = i + 1;
+
+            double deltaX = xi - meanX;
+            double deltaY = yi - meanY;
+
+            meanX += deltaX / count;
+            meanY += deltaY / count;
+
+            double deltaX2 = xi - meanX;
+            double deltaY2 = yi - meanY;
+
+            m2X += deltaX * deltaX2;
+            m2Y += deltaY * deltaY2;
+            cXY += deltaX * deltaY2;
+        }
+
+        if (m2X == 0 || m2Y == 0)
+        {
+            return 0;
+        }
+
+        return cXY / Math.Sqrt(m2X * m2Y);
     }
 
     /// <summary>
